@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { HubPop, type Position, type Theme } from 'hub-pop'
 import { ArchitectureForm } from './components/ArchitectureForm'
 import { SectionCard } from './components/SectionCard'
 import { SummaryCard } from './components/SummaryCard'
@@ -38,6 +39,23 @@ export default function App() {
   const abortRef = useRef<AbortController | null>(null)
 
   const sections = useMemo(() => parseSections(output), [output])
+
+  // Mount the floating hub-pop GitHub card. Config comes from the env (.env).
+  useEffect(() => {
+    const env = import.meta.env
+    const name = env.VITE_HUBPOP_NAME as string | undefined
+    const github = env.VITE_HUBPOP_GITHUB as string | undefined
+    if (!name || !github) return
+
+    const widget = HubPop({
+      name,
+      github,
+      website: (env.VITE_HUBPOP_WEBSITE as string) || undefined,
+      position: env.VITE_HUBPOP_POSITION as Position | undefined,
+      theme: env.VITE_HUBPOP_THEME as Theme | undefined,
+    })
+    return () => widget.destroy()
+  }, [])
 
   async function generate(req: ArchitectureInput) {
     abortRef.current?.abort()

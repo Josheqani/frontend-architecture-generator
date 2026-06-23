@@ -1,73 +1,110 @@
-# React + TypeScript + Vite
+# Frontend Architecture Generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Describe a project, get a structured frontend architecture — streamed live from an LLM and rendered as animated, copyable sections. No explanations, no fluff: just the architecture.
 
-Currently, two official plugins are available:
+Powered by [OpenRouter](https://openrouter.ai), so you can switch between DeepSeek, Mistral, Gemma, Llama, and Qwen from a single dropdown.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Streaming output** — the architecture renders token-by-token as the model responds.
+- **Structured sections** — Stack, Folder Structure, Key Components, State Management, Routing Strategy, and Important Patterns, each in its own animated card.
+- **Styled folder tree** — the ASCII tree is parsed and rendered as a monospace, syntax-tinted block.
+- **Model selector** — pick from five OpenRouter models; the choice is shown in the result summary.
+- **Two-phase UX** — a clean input form animates into a result view with a sticky context summary on the left.
+- **Copy anywhere** — per-section copy buttons plus a single "Copy All".
+- **Polished dark UI** — glassmorphism cards, an animated gradient-mesh background, grain texture, and a floating liquid-glass "Regenerate" button.
+- **Graceful errors** — failures surface as a clean inline banner, never an alert.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+| Layer        | Choice                                  |
+| ------------ | --------------------------------------- |
+| Framework    | React 19 + TypeScript                   |
+| Build tool   | Vite 8                                   |
+| Styling      | Tailwind CSS v4 (`@tailwindcss/vite`)   |
+| Animation    | [Motion](https://motion.dev)            |
+| Markdown     | `react-markdown` + `remark-gfm`         |
+| LLM gateway  | OpenRouter Chat Completions (streaming) |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Prerequisites
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Node.js 18+
+- [pnpm](https://pnpm.io)
+- An [OpenRouter API key](https://openrouter.ai/keys)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Setup
+
+```bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Add your API key
+echo "VITE_OPENROUTER_API_KEY=sk-or-..." > .env
+
+# 3. Start the dev server
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then open the printed local URL (default: `http://localhost:5173`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Environment
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Variable                   | Description                  |
+| -------------------------- | ---------------------------- |
+| `VITE_OPENROUTER_API_KEY`  | Your OpenRouter API key.     |
+
+> **Note:** Vite inlines `VITE_*` variables into the client bundle. This is fine for local use, but for a public deployment, route requests through a small backend proxy so the key never ships to the browser.
+
+## Scripts
+
+| Command        | Description                          |
+| -------------- | ------------------------------------ |
+| `pnpm dev`     | Start the Vite dev server with HMR.  |
+| `pnpm build`   | Type-check and build for production. |
+| `pnpm preview` | Preview the production build.        |
+| `pnpm lint`    | Run ESLint.                          |
+
+## Project Structure
+
 ```
+src/
+├── components/
+│   ├── ui/                  # Animated primitives: Button, Card, Input, Select, Skeleton
+│   ├── ArchitectureForm.tsx # Input form (project details + model selector)
+│   ├── SummaryCard.tsx      # Sticky "context chip" shown beside the result
+│   ├── SectionCard.tsx      # One animated architecture section
+│   ├── FolderTree.tsx       # Styled monospace ASCII-tree renderer
+│   ├── Markdown.tsx         # Themed markdown renderer
+│   ├── CopyButton.tsx       # Copy-to-clipboard with feedback
+│   ├── RegenerateButton.tsx # Floating liquid-glass action
+│   ├── StreamingIndicator.tsx
+│   └── ErrorBanner.tsx
+├── lib/
+│   ├── openrouter.ts        # Streaming client, models, system prompt
+│   ├── sections.ts          # Parses streamed markdown into sections
+│   ├── useCopy.ts           # Clipboard hook
+│   └── cn.ts                # className combiner
+├── App.tsx                  # Two-phase orchestration
+└── index.css                # Theme tokens, background, glass utilities
+```
+
+## How It Works
+
+1. The form collects a project description, scale, framework preference, optional requirements, and a target model.
+2. On submit, `streamArchitecture` posts to OpenRouter with a fixed system prompt that forces a strict, sectioned format.
+3. The response stream is read incrementally, parsed into sections, and rendered as cards that fade in as they arrive.
+4. The chosen model and inputs are pinned in a sticky summary; **Regenerate** re-runs the same request.
+
+## Available Models
+
+- `deepseek/deepseek-chat` — DeepSeek Chat *(default)*
+- `mistralai/mistral-7b-instruct` — Mistral 7B
+- `google/gemma-3-27b-it` — Gemma 3 27B
+- `meta-llama/llama-3.1-8b-instruct` — Llama 3.1 8B
+- `qwen/qwen-2.5-72b-instruct` — Qwen 2.5 72B
+
+## License
+
+MIT
